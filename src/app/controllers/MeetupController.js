@@ -74,6 +74,39 @@ class MeetupController {
       banner_id
     });
   }
+
+  async delete(req, res) {
+    const meetup = await Meetup.findByPk(req.params.id);
+
+    /**
+     * Meetup Exists
+     */
+    if (!meetup) {
+      return res.status(400).json({ error: 'Meetup does not exists' });
+    }
+
+    /**
+     * Owner Update
+     */
+    if (meetup.user_id != req.userId) {
+      return res
+        .status(400)
+        .json({ error: 'Only owner can update this meetup' });
+    }
+
+    /**
+     * Meetup not passed
+     */
+    const meetupNotPassed = !isBefore(meetup.date, new Date());
+
+    if (!meetupNotPassed) {
+      return res.status(400).json({ error: "Meetup passed, can't update" });
+    }
+
+    await Meetup.destroy({ where: { id: meetup.id } });
+
+    return res.json({ message: 'Meetup deleted successfully' });
+  }
 }
 
 export default new MeetupController();
